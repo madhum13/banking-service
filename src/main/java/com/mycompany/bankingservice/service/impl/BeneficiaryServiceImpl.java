@@ -57,6 +57,8 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
         AccountEntity be = null;
         if(optEntity.isPresent()) {
 
+
+
         }
             BeanUtils.copyProperties(be, beneficiaryDTO);
             return beneficiaryDTO;
