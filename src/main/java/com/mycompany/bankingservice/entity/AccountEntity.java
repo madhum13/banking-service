@@ -18,6 +18,7 @@ public class AccountEntity {
     private Long accountId;
     @Column(length = 50)
     private String accountNumber;
+    private String bankName;
     private String ownerName;
     private String accountType;
     private String emailId;
