@@ -1,77 +1,69 @@
 package com.mycompany.bankingservice.controller;
 
-import com.mycompany.bankingservice.dto.AccountDTO;
-import com.mycompany.bankingservice.entity.AccountEntity;
+import com.mycompany.bankingservice.dto.*;
 import com.mycompany.bankingservice.service.AccountService;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import org.springframework.beans.BeanUtils;
+import com.mycompany.bankingservice.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Optional;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/account")
 public class AccountController {
-
+    @Autowired
+    private CustomerService customerService;
     @Autowired
     private AccountService accountService;
 
-    @ApiOperation(value = "register", notes = "This method is used for user registration")
+
     @PostMapping("/register")
-    public ResponseEntity<AccountDTO> register(@ApiParam(
-            name = "AccountDTO",
-            type = "AccountDTO",
-            value = "account data",
-            example = "Account information",
-            required = true
-    ) @Valid @RequestBody AccountDTO accountDTO) {
-        accountDTO = accountService.register(accountDTO);
-        return new ResponseEntity<>(accountDTO, HttpStatus.CREATED);
+    public ResponseEntity<CustomerDTO> register(@Valid @RequestBody CustomerDTO customerDTO){
+        customerDTO = customerService.register(customerDTO);
+        return new ResponseEntity<>(customerDTO, HttpStatus.CREATED);
     }
 
-    @PostMapping(path = "/login", consumes = {"application/json"}, produces = {"application/json"})
-    public ResponseEntity<AccountDTO> login(@Valid @RequestBody AccountDTO accountDTO) {
-        accountDTO = accountService.login(accountDTO);
-        return new ResponseEntity<>(accountDTO, HttpStatus.OK);
-    }
-
-    @PostMapping("/save_account")
-    public ResponseEntity<AccountDTO> saveAccount(@RequestBody AccountDTO accountDTO) {
-
-        accountDTO = accountService.saveAccount(accountDTO);
-
-        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(accountDTO, HttpStatus.CREATED);
+    @PostMapping("/login")
+    public ResponseEntity<String> login(@RequestBody CustomerDTO customerDTO) {
+        String msg = (customerService.login(customerDTO.getOwnerEmail(),customerDTO.getPassword()));
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(msg, HttpStatus.OK);
         return responseEntity;
     }
 
-    @PatchMapping("/deposit/{accountNumber}")
-
-    public ResponseEntity<AccountDTO> deposit(@RequestBody AccountDTO accountDTO, @PathVariable String accountNumber) {
-        accountDTO = accountService.deposit(accountDTO, accountNumber);
-        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(accountDTO, HttpStatus.OK);
+    @PostMapping("/deposit/{customerId}")
+    public ResponseEntity<AccountDTO>credit(@PathVariable Long customerId, @RequestBody AccountDTO accountDTO){
+        AccountDTO account=accountService.credit(customerId,accountDTO.getBalance());
+        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(account, HttpStatus.OK);
+        return responseEntity;
+    }
+    @PostMapping("/withdraw/{customerId}")
+    public ResponseEntity<AccountDTO> debit(@PathVariable Long customerId, @RequestBody AccountDTO accountDTO){
+        AccountDTO account=accountService.debit(customerId,accountDTO.getBalance());
+        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(account, HttpStatus.OK);
         return responseEntity;
     }
 
-    @PatchMapping("/withdraw/{accountNumber}")
-
-    public ResponseEntity<AccountDTO> withdraw(@RequestBody AccountDTO accountDTO, @PathVariable String accountNumber) {
-        accountDTO = accountService.deposit(accountDTO, accountNumber);
-        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(accountDTO, HttpStatus.OK);
+    @GetMapping("/transactions/{customerId}")
+    public ResponseEntity<List<TransactionDTO>> getAllTransactions(@PathVariable Long customerId){
+        List<TransactionDTO> transList=accountService.getAllTransactions(customerId);
+        ResponseEntity<List<TransactionDTO>> responseEntity = new ResponseEntity<>(transList, HttpStatus.OK);
         return responseEntity;
     }
 
-    @GetMapping("/{accountNumber}")
-    public ResponseEntity<AccountDTO> getAvailableBalance(@PathVariable String accountNumber){
-        AccountDTO accountDTO = accountService.getAvailableBalance(accountNumber);
-        ResponseEntity<AccountDTO> responseEntity = new ResponseEntity<>(accountDTO, HttpStatus.OK);
+    @PostMapping("/saveBeneficiary")
+    public ResponseEntity<List<CustomerDTO>> addBeneficiary(@RequestBody BeneficiaryDTO beneficiaryDTO){
+        List<CustomerDTO> beneficiaryList=accountService.addBeneficiary(beneficiaryDTO);
+        ResponseEntity<List<CustomerDTO>> responseEntity = new ResponseEntity<>(beneficiaryList, HttpStatus.OK);
         return responseEntity;
     }
+    @PostMapping("/transfer-money")
+    public ResponseEntity<String> transferMoney(@RequestBody TransferDTO transferDTO){
+        String msg=accountService.transferMoney(transferDTO);
+        ResponseEntity<String> responseEntity = new ResponseEntity<>(msg, HttpStatus.OK);
+        return responseEntity;
 
-
+    }
 }
-

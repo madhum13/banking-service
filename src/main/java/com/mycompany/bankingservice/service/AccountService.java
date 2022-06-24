@@ -1,14 +1,14 @@
 package com.mycompany.bankingservice.service;
 
-import com.mycompany.bankingservice.dto.AccountDTO;
+import com.mycompany.bankingservice.dto.*;
 
-public interface AccountService {
+import java.util.List;
 
-    AccountDTO register(AccountDTO accountDTO);
-    AccountDTO login(AccountDTO accountDTO);
-    AccountDTO saveAccount(AccountDTO accountDTO);
-    AccountDTO deposit(AccountDTO accountDTO, String accountNumber);
-    AccountDTO withdraw(AccountDTO accountDTO, String accountNumber);
-    AccountDTO getAvailableBalance(String accountNumber);
+public interface  AccountService {
+    AccountDTO credit(Long customerId, Double amount);
+    AccountDTO debit(Long customerId, Double balance);
+    List<TransactionDTO> getAllTransactions(Long customerId);
+    List<CustomerDTO> addBeneficiary(BeneficiaryDTO beneficiaryDTO);
+    String transferMoney(TransferDTO transferDTO);
 
 }

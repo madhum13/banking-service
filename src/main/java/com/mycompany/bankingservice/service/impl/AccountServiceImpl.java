@@ -1,122 +1,230 @@
 package com.mycompany.bankingservice.service.impl;
 
-import com.mycompany.bankingservice.dto.AccountDTO;
+import com.mycompany.bankingservice.dto.*;
 import com.mycompany.bankingservice.entity.AccountEntity;
+import com.mycompany.bankingservice.entity.CustomerEntity;
+import com.mycompany.bankingservice.entity.TransactionEntity;
 import com.mycompany.bankingservice.exception.BusinessException;
 import com.mycompany.bankingservice.exception.ErrorModel;
 import com.mycompany.bankingservice.repository.AccountRepository;
+import com.mycompany.bankingservice.repository.CustomerRepository;
+import com.mycompany.bankingservice.repository.TransactionRepository;
 import com.mycompany.bankingservice.service.AccountService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 @Service
 public class AccountServiceImpl implements AccountService {
-
     @Autowired
-    private AccountRepository accountRepository;
-
-
-
-
+    CustomerRepository customerRepository;
+    @Autowired
+    AccountRepository accountRepository;
+    @Autowired
+    TransactionRepository transactionRepository;
     @Override
-    public AccountDTO register(AccountDTO accountDTO) {
-        Optional<AccountEntity> optUe = accountRepository.findById(accountDTO.getOwnerName());
-        if(optUe.isPresent()){
-            List<ErrorModel> errorModelList = new ArrayList<>();
-            ErrorModel errorModel = new ErrorModel();
-            errorModel.setCode("OWNER NAME_ALREADY_EXIST");
-            errorModel.setMessage("The OWNER NAME With Which You Are Trying To Register Already Exist!");
-            errorModelList.add(errorModel);
-            throw new BusinessException(errorModelList);
+    public AccountDTO credit(Long customerId, Double amount) {
+        AccountDTO accountDTO = new AccountDTO();
+        Optional<CustomerEntity> custEntity = customerRepository.findById(customerId);
+        if (custEntity.isPresent()) {
+            Long accNumber = custEntity.get().getAccount().getAccountId();
+            Optional<AccountEntity> accEntity = accountRepository.findById(accNumber);
+            AccountEntity accountEntity = null;
+
+            if (accEntity.isPresent()) {
+                accountEntity = accEntity.get();
+                Double balance = accountEntity.getBalance();
+                Double newBalance = balance + amount;
+                accountEntity.setBalance(newBalance);
+                accountEntity = accountRepository.save(accountEntity);
+                BeanUtils.copyProperties(accountEntity, accountDTO);
+
+                TransactionEntity transactionEntity = new TransactionEntity();
+                transactionEntity.setAmount(amount);
+                transactionEntity.setCustomerId(customerId);
+                transactionEntity.setTransactionType("Credit");
+                transactionEntity.setTime(LocalDateTime.now());
+                transactionEntity = transactionRepository.save(transactionEntity);
+            }
+        } else {
+            ErrorModel model = new ErrorModel();
+            model.setMessage("Sorry no account found");
+            model.setCode("ACCOUNT_001");
+            List<ErrorModel> errors = new ArrayList<>();
+            errors.add(model);
+            throw new BusinessException(errors);
+
         }
-        AccountEntity ae = null;
 
-        ae = optUe.get();
-        ae.setEmailId(accountDTO.getEmailId());
-        ae.setAccountNumber(accountDTO.getAccountNumber());
-        ae.setAccountType(accountDTO.getAccountType());
-        ae.setOwnerName(accountDTO.getOwnerName());
-        ae.setPhoneNo(accountDTO.getPhoneNo());
-        ae.setPassword(accountDTO.getPassword());
-        ae = accountRepository.save(ae);
 
-        BeanUtils.copyProperties(ae, accountDTO);
         return accountDTO;
     }
 
     @Override
-    public AccountDTO login(AccountDTO accountDTO) {
+    public AccountDTO debit(Long customerId, Double amount) {
+        AccountDTO accountDTO = new AccountDTO();
+        Optional<CustomerEntity> custEntity = customerRepository.findById(customerId);
+        if (custEntity.isPresent()) {
+            Long accNumber = custEntity.get().getAccount().getAccountId();
+            Optional<AccountEntity> accEntity = accountRepository.findById(accNumber);
+            AccountEntity accountEntity = null;
 
-        Optional<AccountEntity> optionalAccountEntity = accountRepository.findByEmailAndPassword(accountDTO.getEmailId(), accountDTO.getPassword());
-        optionalAccountEntity.orElseThrow(()-> {
-            List<ErrorModel> errorModelList = new ArrayList<>();
-            ErrorModel errorModel = new ErrorModel();
-            errorModel.setCode("INVALID_LOGIN");
-            errorModel.setMessage("Incorrect Email or Password");
-            errorModelList.add(errorModel);
+            if (accEntity.isPresent()) {
+                accountEntity = accEntity.get();
+                Double balance = accountEntity.getBalance();
+                Double newBalance = balance - amount;
+                accountEntity.setBalance(newBalance);
+                accountEntity = accountRepository.save(accountEntity);
+                BeanUtils.copyProperties(accountEntity, accountDTO);
 
-            throw new BusinessException(errorModelList);
-        });
-        BeanUtils.copyProperties(optionalAccountEntity.get(), accountDTO);
-        accountDTO.setPassword(null);
-        return accountDTO;
+                TransactionEntity transactionEntity = new TransactionEntity();
+                transactionEntity.setAmount(amount);
+                transactionEntity.setCustomerId(customerId);
+                transactionEntity.setTransactionType("Debit");
+                transactionEntity.setTime(LocalDateTime.now());
+                transactionEntity = transactionRepository.save(transactionEntity);
+            }
+        } else {
+            ErrorModel model = new ErrorModel();
+            model.setMessage("Sorry no account found");
+            model.setCode("ACCOUNT_001");
+            List<ErrorModel> errors = new ArrayList<>();
+            errors.add(model);
+            throw new BusinessException(errors);
 
-    }
-
-    @Override
-    public AccountDTO saveAccount(AccountDTO accountDTO) {
-        AccountEntity accountEntity = new AccountEntity();
-        BeanUtils.copyProperties(accountDTO, accountEntity);
-        accountEntity = accountRepository.save(accountEntity);
-        BeanUtils.copyProperties(accountEntity, accountDTO);
-        return accountDTO;
-    }
-
-    @Override
-    public AccountDTO deposit(AccountDTO accountDTO, String accountNumber) {
-        Optional<AccountEntity> optEntity = accountRepository.findById(accountNumber);
-        AccountEntity be = null;
-        if(optEntity.isPresent()){
-            be = optEntity.get();
-            be.setAvailableBalance(accountDTO.getAvailableBalance());
-            be = accountRepository.save(be);
         }
-        BeanUtils.copyProperties(be, accountDTO);
+
+
         return accountDTO;
     }
 
     @Override
-    public AccountDTO withdraw(AccountDTO accountDTO, String accountNumber) {
-        Optional<AccountEntity> optEntity = accountRepository.findById(accountNumber);
-        AccountEntity be = null;
-        if(optEntity.isPresent()){
-            be = optEntity.get();
-            be.setAvailableBalance(accountDTO.getAvailableBalance());
-            be = accountRepository.save(be);
+    public List<TransactionDTO> getAllTransactions(Long customerId) {
+        Optional<List<TransactionEntity>> transactionEntityList = transactionRepository.findByCustomerId(customerId);
+        List<TransactionDTO> transactionList = new ArrayList<>();
+        if (transactionEntityList.isPresent()) {
+            List<TransactionEntity> transactionsList = transactionEntityList.get();
+
+            for (TransactionEntity entity : transactionsList) {
+                TransactionDTO transDTO = new TransactionDTO();
+                transDTO.setTransactionId(entity.getTransactionId());
+                transDTO.setTransactionType(entity.getTransactionType());
+                transDTO.setAmount(entity.getAmount());
+                transDTO.setTime(entity.getTime());
+                transDTO.setCustomerId(entity.getCustomerId());
+                transactionList.add(transDTO);
+            }
+
+        } else {
+            ErrorModel model = new ErrorModel();
+            model.setMessage("Sorry no transactions found");
+            model.setCode("TRANSACT_001");
+            List<ErrorModel> errors = new ArrayList<>();
+            errors.add(model);
+            throw new BusinessException(errors);
+
+
         }
-        BeanUtils.copyProperties(be, accountDTO);
-        return accountDTO;
+        return transactionList;
     }
 
     @Override
-    public AccountDTO getAvailableBalance(String accountNumber) {
-        Optional<AccountEntity> optBook = accountRepository.findById(accountNumber);
-        AccountDTO accountDTO = null;
-        if(optBook.isPresent()){
-            accountDTO = new AccountDTO();
-            BeanUtils.copyProperties(optBook.get(), accountDTO);
+    public List<CustomerDTO> addBeneficiary(BeneficiaryDTO beneficiaryDTO) {
+        Optional<CustomerEntity> custEntity = customerRepository.findById(beneficiaryDTO.getCustomerId());
+        List<CustomerDTO> beneficairyList = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        if (custEntity.isPresent()) {
+            for (CustomerDTO c : beneficiaryDTO.getBeneficiaries()) {
+                Optional<CustomerEntity> benefiti = customerRepository.findById(c.getId());
+                if (benefiti.isPresent()) {
+                    CustomerDTO bene = new CustomerDTO();
+                    bene.setOwnerEmail(benefiti.get().getOwnerEmail());
+                    bene.setOwnerName(benefiti.get().getOwnerName());
+                    beneficairyList.add(bene);
+                    sb.append(c.getId().toString());
+                    sb.append(",");
+
+                } else {
+                    ErrorModel model = new ErrorModel();
+                    model.setMessage("Sorry no beneficiary account found for " + c.getId());
+                    model.setCode("ACCOUNT_002");
+                    List<ErrorModel> errors = new ArrayList<>();
+                    errors.add(model);
+                    throw new BusinessException(errors);
+                }
+
+            }
+            sb.deleteCharAt(sb.toString().length() - 1);
+            CustomerEntity customerEntity = custEntity.get();
+            customerEntity.setBeneficiaries(sb.toString());
+            customerEntity = customerRepository.save(customerEntity);
+
+
+        } else {
+            ErrorModel model = new ErrorModel();
+            model.setMessage("Sorry no account found");
+            model.setCode("ACCOUNT_001");
+            List<ErrorModel> errors = new ArrayList<>();
+            errors.add(model);
+            throw new BusinessException(errors);
+
         }
-        return accountDTO;
+
+        return beneficairyList;
     }
 
+    @Override
+    public String transferMoney(TransferDTO transferDTO) {
+        Optional<CustomerEntity> custEntity = customerRepository.findById(transferDTO.getCustId());
+        if (custEntity.isPresent()) {
+            CustomerEntity cust = custEntity.get();
+            cust.getAccount().getBalance();
+            if (transferDTO.getAmount() > cust.getAccount().getBalance()) {
+                ErrorModel model = new ErrorModel();
+                model.setMessage("Sorry you do not have sufficient balance in your account to make a transfer");
+                model.setCode("TRANSFER_001");
+                List<ErrorModel> errors = new ArrayList<>();
+                errors.add(model);
+                throw new BusinessException(errors);
 
+            }
+            else {
+                Optional<CustomerEntity> bene = customerRepository.findById(transferDTO.getBeneficiaryId());
+                if (bene.isPresent()) {
+                    CustomerEntity custEn = bene.get();
+                    Double newAmountBene = custEn.getAccount().getBalance() + transferDTO.getAmount();
+                    custEn.getAccount().setBalance(newAmountBene);
+                    custEn = customerRepository.save(custEn);
+                    Double newAmountCust = cust.getAccount().getBalance() - transferDTO.getAmount();
+                    cust.getAccount().setBalance(newAmountCust);
+                    cust=customerRepository.save(cust);
+
+                } else {
+                    ErrorModel model = new ErrorModel();
+                    model.setMessage("Sorry no beneficiary account found for " + transferDTO.getBeneficiaryId());
+                    model.setCode("ACCOUNT_002");
+                    List<ErrorModel> errors = new ArrayList<>();
+                    errors.add(model);
+                    throw new BusinessException(errors);
+                }
+            }
+
+
+        }
+        else{
+            ErrorModel model = new ErrorModel();
+            model.setMessage("Sorry no customer account found for " + transferDTO.getCustId());
+            model.setCode("ACCOUNT_002");
+            List<ErrorModel> errors = new ArrayList<>();
+            errors.add(model);
+            throw new BusinessException(errors);
+        }
+        return "Sucessfully transferred your money";
+
+    }
 }
