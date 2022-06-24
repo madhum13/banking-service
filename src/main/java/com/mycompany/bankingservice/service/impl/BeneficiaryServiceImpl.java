@@ -52,16 +52,22 @@ public class BeneficiaryServiceImpl implements BeneficiaryService {
 
     @Override
     public BeneficiaryDTO beneficiaryTxn(BeneficiaryDTO beneficiaryDTO) {
+      /*  Optional<BeneficiaryEntity> beneficiaryEntity = beneficiaryRepository.findById(beneficiaryDTO.());
+        if (beneficiaryEntity.isPresent()) {
+            BeneficiaryEntity cust = beneficiaryEntity.get();
+            cust.getAccountNumber();
+            if (beneficiaryDTO.getAccountNumber() > ) {
+                ErrorModel model = new ErrorModel();
+                model.setMessage("Sorry you do not have sufficient balance in your account to make a transfer");
+                model.setCode("TRANSFER_001");
+                List<ErrorModel> errors = new ArrayList<>();
+                errors.add(model);
+                throw new BusinessException(errors);
 
-        Optional<BeneficiaryEntity> optEntity = beneficiaryRepository.findByBeneficiaryName(beneficiaryDTO.getBeneficiaryName());
-        AccountEntity be = null;
-        if(optEntity.isPresent()) {
+            }
+            else {
 
-
-
-        }
-            BeanUtils.copyProperties(be, beneficiaryDTO);
-            return beneficiaryDTO;
-
+        }*/
+        return beneficiaryDTO;
         }
 }
