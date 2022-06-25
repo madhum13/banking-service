@@ -7,7 +7,7 @@ import lombok.Setter;
 @Setter
 public class TransferDTO {
 
-    private Long custId;
+    private Long customerId;
     private Long beneficiaryId;
     private Double amount;
 }

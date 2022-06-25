@@ -17,7 +17,6 @@ public class CustomerEntity {
     private Long id;
     @Column(name = "NAME")
     private String ownerName;
-    //@Column(name = "EMAIL", nullable = false)
     @Column(name = "EMAIL")
     private String ownerEmail;
     @Column(name = "PHONE")
@@ -29,6 +28,5 @@ public class CustomerEntity {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "account_id")
     private AccountEntity account;
-
     private String beneficiaries;
 }

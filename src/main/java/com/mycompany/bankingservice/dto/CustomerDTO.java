@@ -28,7 +28,7 @@ public class CustomerDTO {
     @Size(min = 9, message = "Not a valid phone number")
     private String phone;
     @NotNull(message = "Adhaar registration is mandatory")
-    @Size(min = 8, message = "Not a valid adhaar number")
+    @Size(min = 8, message = "Not a valid adhar number")
     private String adhaarNo;
     private Long accountNo;
     private String beneficiaries;

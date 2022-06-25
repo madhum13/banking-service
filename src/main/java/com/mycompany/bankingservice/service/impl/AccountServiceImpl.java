@@ -180,7 +180,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public String transferMoney(TransferDTO transferDTO) {
-        Optional<CustomerEntity> custEntity = customerRepository.findById(transferDTO.getCustId());
+        Optional<CustomerEntity> custEntity = customerRepository.findById(transferDTO.getCustomerId());
         if (custEntity.isPresent()) {
             CustomerEntity cust = custEntity.get();
             cust.getAccount().getBalance();
@@ -218,13 +218,13 @@ public class AccountServiceImpl implements AccountService {
         }
         else{
             ErrorModel model = new ErrorModel();
-            model.setMessage("Sorry no customer account found for " + transferDTO.getCustId());
+            model.setMessage("Sorry no customer account found for " + transferDTO.getCustomerId());
             model.setCode("ACCOUNT_002");
             List<ErrorModel> errors = new ArrayList<>();
             errors.add(model);
             throw new BusinessException(errors);
         }
-        return "Sucessfully transferred your money";
+        return "Successfully transferred your money";
 
     }
 }
